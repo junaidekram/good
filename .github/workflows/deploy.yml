@@ -28,8 +28,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'flightsimulator-master/src/package-lock.json'
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: flightsimulator-master/src/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('flightsimulator-master/src/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
 
       - name: Install dependencies
         run: cd flightsimulator-master/src && npm install
