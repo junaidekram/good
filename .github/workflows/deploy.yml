@@ -24,16 +24,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (no caching)
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies
-        run: cd flightsimulator-master/src && npm ci
+        working-directory: flightsimulator-master/src
+        run: npm ci --prefer-offline --no-audit
 
       - name: Build project
-        run: cd flightsimulator-master/src && npm run build
+        working-directory: flightsimulator-master/src
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
