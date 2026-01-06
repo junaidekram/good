@@ -24,12 +24,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (no caching)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          cache-dependency-path: 'flightsimulator-master/src/package-lock.json'
 
       - name: Clean npm cache
         run: npm cache clean --force
