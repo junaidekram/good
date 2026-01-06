@@ -1,0 +1,9 @@
+.DS_Store
+node_modules
+package-lock.json
+
+dist
+src/glb50
+src/glb10
+src/texture
+
