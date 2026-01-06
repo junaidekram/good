@@ -28,15 +28,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'flightsimulator-master/src/package-lock.json'
-
-      - name: Clean npm cache
-        run: npm cache clean --force
 
       - name: Install dependencies
         working-directory: flightsimulator-master/src
-        run: npm ci --prefer-offline --no-audit
+        run: npm install --no-audit
 
       - name: Build project
         working-directory: flightsimulator-master/src
