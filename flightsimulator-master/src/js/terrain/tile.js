@@ -58,22 +58,41 @@ async function fetchImageData(url, tileName, fallback = null) {
   }
 }
 
-// Generate procedural terrain as fallback
+// Generate procedural terrain as fallback (creates valid RGB heightmap)
 function generateProceduralTerrain(tileExtents, seed = 0) {
-  const segmentsX = 64
-  const segmentsY = 64
   const canvas = document.createElement("canvas")
   canvas.width = 256
   canvas.height = 256
   const ctx = canvas.getContext("2d")
   
-  // Simple procedural texture (checkerboard + noise)
+  // Create a flat terrain at sea level encoded as Terrain-RGB
+  // Sea level (0m) = -10000 + (R*256*256 + G*256 + B) * 0.1
+  // 0 = -10000 + value * 0.1
+  // value = 100000
+  const r = Math.floor(100000 / 65536) // 1
+  const g = Math.floor((100000 % 65536) / 256) // 134
+  const b = 100000 % 256 // 160
+  
+  ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+  ctx.fillRect(0, 0, 256, 256)
+  
+  return createImageBitmap(canvas)
+}
+
+// Generate simple texture as fallback
+function generateProceduralTexture(seed = 0) {
+  const canvas = document.createElement("canvas")
+  canvas.width = 256
+  canvas.height = 256
+  const ctx = canvas.getContext("2d")
+  
+  // Simple green/brown texture
   for (let y = 0; y < 256; y++) {
     for (let x = 0; x < 256; x++) {
-      const check = ((x >> 5) + (y >> 5)) % 2 === 0 ? 100 : 150
-      const noise = Math.sin((x + seed) * 0.01) * Math.cos((y + seed) * 0.01) * 50
+      const check = ((x >> 5) + (y >> 5)) % 2 === 0 ? 100 : 120
+      const noise = Math.sin((x + seed) * 0.01) * Math.cos((y + seed) * 0.01) * 20
       const val = check + noise
-      ctx.fillStyle = `rgb(${val}, ${val}, ${val})`
+      ctx.fillStyle = `rgb(${val}, ${val * 0.8}, ${val * 0.6})`
       ctx.fillRect(x, y, 1, 1)
     }
   }
@@ -218,25 +237,23 @@ export default class Tile {
 
       console.log(`Loading terrain tile ${this.tileName} (z:${z} x:${x} y:${y})`)
 
-      // Try AWS Terrain Tiles (free, CORS-enabled, no auth required)
-      // https://registry.opendata.aws/usgs-elevation/
-      const terrainUrl = `https://cloud.sdsc.edu/v1/AUTH_opentopography/Raster/SRTM_GL30/SRTM_GL30_srtm/${z}/${x}/${y}.tif`
+      // Use OpenStreetMap for imagery (free, no auth needed)
       const imageryUrl = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`
 
-      // Fetch with timeouts
-      const terrainBitmap = await Promise.race([
-        fetchImageData(terrainUrl, `${this.tileName}-terrain`),
-        new Promise(r => setTimeout(() => r(null), 3000))
-      ])
-
+      // Note: Real terrain data requires either:
+      // 1. Mapbox access token (recommended) - see MAPBOX_SETUP.md
+      // 2. AWS Terrain Tiles (limited coverage)
+      // For now, using flat procedural terrain as fallback
+      
+      // Fetch imagery with timeout
       const textureBitmap = await Promise.race([
         fetchImageData(imageryUrl, `${this.tileName}-imagery`),
         new Promise(r => setTimeout(() => r(null), 3000))
       ])
 
-      // If tiles failed, use procedural fallback
-      const terrainToUse = terrainBitmap || await generateProceduralTerrain(this.tileExtents, parseInt(this.tileName))
-      const textureToUse = textureBitmap || await generateProceduralTerrain(this.tileExtents, parseInt(this.tileName) + 1000)
+      // Use procedural terrain (flat at sea level) until proper terrain service is configured
+      const terrainToUse = await generateProceduralTerrain(this.tileExtents, parseInt(this.tileName))
+      const textureToUse = textureBitmap || await generateProceduralTexture(parseInt(this.tileName) + 1000)
 
       if (!terrainToUse || !textureToUse) {
         throw new Error("Could not load or generate terrain")
