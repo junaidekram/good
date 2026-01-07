@@ -207,8 +207,8 @@ setInterval(() => {
       const hit = tileGeometry.boundsTree.raycastFirst(interSectionRay)
 
       // flag collision if we were too low or there was no hit (we were under the surface)
-      // Use larger safety distance of 10 meters to avoid false positives
-      if (!hit || hit.distance < 10) {
+      // Use larger safety distance of 50 meters to account for terrain loading
+      if (!hit || hit.distance < 50) {
         document.location.href = "collision.html"
       }
     }
@@ -307,7 +307,7 @@ function getStartpointFromParameters(urlParams) {
   // set start point: UTM EAST, UTM NORTH, altitude (meters) and compass direction
   let east = +urlParams.get("e") || 105000
   let north = +urlParams.get("n") || 6970000
-  const alt = +urlParams.get("a") || 1524 // 5000 ft
+  const alt = +urlParams.get("a") || 3048 // 10000 ft (increased to clear terrain)
 
   // if input coordinates are GPS lat/lon, convert to utm33
   if (north < 72 && east < 33) {
