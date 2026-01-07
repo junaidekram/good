@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapbox Terrain Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #status { margin: 20px 0; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        img { margin: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Mapbox 3D Terrain Test</h1>
+    <div id="status">Testing...</div>
+    <div id="images"></div>
+    <div id="console"></div>
+    
+    <script>
+        const TOKEN = 'pk.eyJ1IjoianVuYWlkZWtyYW0iLCJhIjoiY21rMzB6b3ptMG44OTNjcHdrMHV5dTcxayJ9.aGF0gdpb2-YuOqczZnhyLA';
+        const status = document.getElementById('status');
+        const images = document.getElementById('images');
+        const consoleDiv = document.getElementById('console');
+        
+        function log(msg, isError = false) {
+            const p = document.createElement('p');
+            p.textContent = msg;
+            p.className = isError ? 'error' : 'success';
+            consoleDiv.appendChild(p);
+            console.log(msg);
+        }
+        
+        async function testTile() {
+            // Test coordinates: tile 272,140 at zoom 9 (near Norway)
+            const z = 9, x = 272, y = 140;
+            
+            // Test terrain
+            const terrainUrl = `https://api.mapbox.com/v4/mapbox.terrain-rgb/${z}/${x}/${y}.pngraw?access_token=${TOKEN}`;
+            log(`Testing terrain URL: ${terrainUrl}`);
+            
+            try {
+                const terrainResp = await fetch(terrainUrl);
+                if (!terrainResp.ok) throw new Error(`Terrain HTTP ${terrainResp.status}`);
+                
+                const terrainBlob = await terrainResp.blob();
+                const terrainImg = document.createElement('img');
+                terrainImg.src = URL.createObjectURL(terrainBlob);
+                terrainImg.title = 'Terrain-RGB (heightmap)';
+                images.appendChild(terrainImg);
+                log('✓ Terrain-RGB loaded successfully');
+            } catch (err) {
+                log(`✗ Terrain failed: ${err.message}`, true);
+            }
+            
+            // Test imagery
+            const imageryUrl = `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.jpg90?access_token=${TOKEN}`;
+            log(`Testing imagery URL: ${imageryUrl}`);
+            
+            try {
+                const imageryResp = await fetch(imageryUrl);
+                if (!imageryResp.ok) throw new Error(`Imagery HTTP ${imageryResp.status}`);
+                
+                const imageryBlob = await imageryResp.blob();
+                const imageryImg = document.createElement('img');
+                imageryImg.src = URL.createObjectURL(imageryBlob);
+                imageryImg.title = 'Satellite imagery';
+                images.appendChild(imageryImg);
+                log('✓ Satellite imagery loaded successfully');
+            } catch (err) {
+                log(`✗ Imagery failed: ${err.message}`, true);
+            }
+            
+            status.innerHTML = '<span class="success">Test complete! Check console above.</span>';
+        }
+        
+        testTile();
+    </script>
+</body>
+</html>
