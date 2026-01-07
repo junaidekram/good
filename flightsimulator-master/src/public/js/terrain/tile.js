@@ -237,22 +237,26 @@ export default class Tile {
 
       console.log(`Loading terrain tile ${this.tileName} (z:${z} x:${x} y:${y})`)
 
-      // Use OpenStreetMap for imagery (free, no auth needed)
-      const imageryUrl = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`
+      // Mapbox token for terrain and imagery
+      const MAPBOX_TOKEN = 'pk.eyJ1IjoianVuYWlkZWtyYW0iLCJhIjoiY21rMzB6b3ptMG44OTNjcHdrMHV5dTcxayJ9.aGF0gdpb2-YuOqczZnhyLA'
 
-      // Note: Real terrain data requires either:
-      // 1. Mapbox access token (recommended) - see MAPBOX_SETUP.md
-      // 2. AWS Terrain Tiles (limited coverage)
-      // For now, using flat procedural terrain as fallback
-      
-      // Fetch imagery with timeout
-      const textureBitmap = await Promise.race([
-        fetchImageData(imageryUrl, `${this.tileName}-imagery`),
-        new Promise(r => setTimeout(() => r(null), 3000))
+      // Fetch real terrain elevation from Mapbox Terrain-RGB
+      const terrainUrl = `https://api.mapbox.com/v4/mapbox.terrain-rgb/${z}/${x}/${y}.pngraw?access_token=${MAPBOX_TOKEN}`
+      const imageryUrl = `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.jpg80?access_token=${MAPBOX_TOKEN}`
+
+      // Fetch terrain and imagery with timeout
+      const terrainBitmap = await Promise.race([
+        fetchImageData(terrainUrl, `${this.tileName}-terrain`),
+        new Promise(r => setTimeout(() => r(null), 5000))
       ])
 
-      // Use procedural terrain (flat at sea level) until proper terrain service is configured
-      const terrainToUse = await generateProceduralTerrain(this.tileExtents, parseInt(this.tileName))
+      const textureBitmap = await Promise.race([
+        fetchImageData(imageryUrl, `${this.tileName}-imagery`),
+        new Promise(r => setTimeout(() => r(null), 5000))
+      ])
+
+      // Use procedural fallback only if Mapbox fetch fails
+      const terrainToUse = terrainBitmap || await generateProceduralTerrain(this.tileExtents, parseInt(this.tileName))
       const textureToUse = textureBitmap || await generateProceduralTexture(parseInt(this.tileName) + 1000)
 
       if (!terrainToUse || !textureToUse) {
