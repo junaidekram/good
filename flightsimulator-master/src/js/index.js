@@ -187,9 +187,7 @@ setInterval(() => {
 
   // get the tile
   const tile = terrain.tiles.get(`${x}-${y}`)
-  
-  // Only check collision if tile is fully loaded with BVH
-  if (tile && tile.loaded && tile.tileMesh.geometry.boundsTree) {
+  if (tile.loaded) {
     const cameraElevation = camera.position.z * SimulationConstants.FEET_TO_METERS
     const tileGeometry = tile.tileMesh.geometry
 
@@ -207,8 +205,7 @@ setInterval(() => {
       const hit = tileGeometry.boundsTree.raycastFirst(interSectionRay)
 
       // flag collision if we were too low or there was no hit (we were under the surface)
-      // Use larger safety distance of 50 meters to account for terrain loading
-      if (!hit || hit.distance < 50) {
+      if (!hit || hit.distance < 4) {
         document.location.href = "collision.html"
       }
     }
@@ -307,7 +304,7 @@ function getStartpointFromParameters(urlParams) {
   // set start point: UTM EAST, UTM NORTH, altitude (meters) and compass direction
   let east = +urlParams.get("e") || 105000
   let north = +urlParams.get("n") || 6970000
-  const alt = +urlParams.get("a") || 3048 // 10000 ft (increased to clear terrain)
+  const alt = +urlParams.get("a") || 1524 // 5000 ft
 
   // if input coordinates are GPS lat/lon, convert to utm33
   if (north < 72 && east < 33) {
