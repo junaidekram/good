@@ -242,7 +242,7 @@ export default class Tile {
 
       // Fetch real terrain elevation from Mapbox Terrain-RGB
       const terrainUrl = `https://api.mapbox.com/v4/mapbox.terrain-rgb/${z}/${x}/${y}.pngraw?access_token=${MAPBOX_TOKEN}`
-      const imageryUrl = `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.jpg80?access_token=${MAPBOX_TOKEN}`
+      const imageryUrl = `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.jpg90?access_token=${MAPBOX_TOKEN}`
 
       // Fetch terrain and imagery with timeout
       const terrainBitmap = await Promise.race([

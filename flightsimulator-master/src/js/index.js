@@ -187,7 +187,9 @@ setInterval(() => {
 
   // get the tile
   const tile = terrain.tiles.get(`${x}-${y}`)
-  if (tile.loaded) {
+  
+  // Only check collision if tile is fully loaded with BVH
+  if (tile && tile.loaded && tile.tileMesh.geometry.boundsTree) {
     const cameraElevation = camera.position.z * SimulationConstants.FEET_TO_METERS
     const tileGeometry = tile.tileMesh.geometry
 
@@ -205,7 +207,8 @@ setInterval(() => {
       const hit = tileGeometry.boundsTree.raycastFirst(interSectionRay)
 
       // flag collision if we were too low or there was no hit (we were under the surface)
-      if (!hit || hit.distance < 4) {
+      // Use larger safety distance of 10 meters to avoid false positives
+      if (!hit || hit.distance < 10) {
         document.location.href = "collision.html"
       }
     }
